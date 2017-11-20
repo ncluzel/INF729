@@ -83,12 +83,16 @@ object Trainer {
     val country_encoder = new StringIndexer()
       .setInputCol("country2")
       .setOutputCol("country_indexed")
+      .setHandleInvalid("keep")
 
     // On réindexe les devises:
     val currency_encoder = new StringIndexer()
       .setInputCol("currency2")
       .setOutputCol("currency_indexed")
+      .setHandleInvalid("keep")
 
+    // NB: J'ai remarqué que j'avais quelques fois des bugs d'exécution dues à l'absence de l'étiquette "DE"
+    // lors de certains splits training/test. J'utilise donc l'option setHandleInvalid pour éviter qu'elle se reproduise.
 
     /** VECTOR ASSEMBLER **/
 
@@ -162,6 +166,6 @@ object Trainer {
     println("On remarque que notre classifieur est en quelque sorte 'trop gentil' : " +
       "il a tendance à prédire la réussite de nombreux projets qui ont en réalité échoué.")
 
-    println(score)
+    println("On obtient un pourcentage de " + score + "% de prédictions correctes avec notre modèle de régression.")
   }
 }
