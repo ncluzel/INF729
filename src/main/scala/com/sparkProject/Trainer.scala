@@ -6,6 +6,7 @@ import org.apache.spark.ml.feature.{CountVectorizer, IDF, RegexTokenizer, StopWo
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
+import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit, TrainValidationSplitModel}
 
 
@@ -137,10 +138,11 @@ object Trainer {
       .addGrid(lr.regParam, Array(1E-8, 1E-6, 1E-4, 1E-2))
       .build()
 
-    // On crée un évaluateur à partir d'un classifieur binaire:
-    val evaluator = new BinaryClassificationEvaluator()
+    // On crée un évaluateur à partir d'un classifieur multiple utilisant la métrique f1 pour le scoring:
+      val evaluator = new MulticlassClassificationEvaluator()
       .setLabelCol("final_status")
-      .setRawPredictionCol("predictions")
+      .setPredictionCol("predictions")
+      .setMetricName("f1")
 
     // On définit les paramètres de notre grille de validation croisée:
     val GridSearchCV = new TrainValidationSplit()
@@ -156,7 +158,7 @@ object Trainer {
     val df_WithPredictions = lrCVModel.transform(test_data)
 
     // On calcule la précision de notre évaluateur:
-    val score = evaluator.evaluate(df_WithPredictions)
+    val f1_score = evaluator.evaluate(df_WithPredictions)
 
     df_WithPredictions.groupBy("final_status", "predictions").count.show()
 
@@ -166,6 +168,6 @@ object Trainer {
     println("On remarque que notre classifieur est en quelque sorte 'trop gentil' : " +
       "il a tendance à prédire la réussite de nombreux projets qui ont en réalité échoué.")
 
-    println("On obtient un pourcentage de " + score + "% de prédictions correctes avec notre modèle de régression.")
+    println("On obtient un pourcentage de " + f1_score + "% de prédictions correctes avec notre modèle de régression.")
   }
 }
