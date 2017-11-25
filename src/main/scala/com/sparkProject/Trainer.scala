@@ -5,9 +5,8 @@ import org.apache.spark.ml.classification.LogisticRegression
 import org.apache.spark.ml.feature.{CountVectorizer, IDF, RegexTokenizer, StopWordsRemover, StringIndexer, VectorAssembler}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.apache.spark.ml.Pipeline
-import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
-import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit, TrainValidationSplitModel}
+import org.apache.spark.ml.evaluation.{BinaryClassificationEvaluator, MulticlassClassificationEvaluator}
+import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit}
 
 
 object Trainer {
@@ -49,12 +48,11 @@ object Trainer {
 
     /** CHARGER LE DATASET **/
 
-    val df: DataFrame = spark
+      // On récupère le dataset dans le dossier data:
+    val df_preprocessed: DataFrame = spark
       .read
-      .option("header", value = true) // Use first line of all files as header
-      .option("inferSchema", "true") // Try to infer the data types of each column
       .parquet("data/prepared_trainingset")
-
+    
 
     /** TF-IDF **/
 
@@ -130,7 +128,7 @@ object Trainer {
     /** TRAINING AND GRID-SEARCH **/
 
     // On conserve 90% des données pour l'entraînement, et 10% pour le test:
-    val Array(training_data, test_data) = df.randomSplit(Array(0.9, 0.1))
+    val Array(training_data, test_data) = df_preprocessed.randomSplit(Array(0.9, 0.1))
 
     // On crée une grille sur les deux paramètres utilisés pour la validation croisée:
     val paramGrid = new ParamGridBuilder()
